@@ -1,50 +1,44 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow
- * @lint-ignore-every XPLATJSCOPYRIGHT1
- */
+import React from 'react';
+import { FlatList } from 'react-native';
 
-import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+import { getNews } from './src/news';
+import Article from './src/components/Article.js';
 
-const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
-  android:
-    'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
-});
+export default class App extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = { articles: [], refreshing: true };
+		this.fetchNews = this.fetchNews.bind(this);
+	}
+	// Called after a component is mounted
+	componentDidMount () {
+		this.fetchNews();
+	}
 
-type Props = {};
-export default class App extends Component<Props> {
-  render() {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>Welcome to React Native!</Text>
-        <Text style={styles.instructions}>To get started, edit App.js</Text>
-        <Text style={styles.instructions}>{instructions}</Text>
-      </View>
-    );
-  }
+	fetchNews () {
+		getNews()
+			.then(articles => this.setState({ articles, refreshing: false }))
+			.catch(() => this.setState({ refreshing: false }));
+	}
+
+	handleRefresh () {
+		this.setState(
+			{
+				refreshing: true
+			},
+			() => this.fetchNews()
+		);
+	}
+
+	render () {
+		return (
+			<FlatList
+				data={this.state.articles}
+				renderItem={({ item }) => <Article article={item} />}
+				keyExtractor={item => item.url}
+				refreshing={this.state.refreshing}
+				onRefresh={this.handleRefresh.bind(this)}
+			/>
+		);
+	}
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
-});
